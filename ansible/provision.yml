@@ -1,0 +1,30 @@
+---
+- hosts: servers
+  vars_files:
+    - vars.yml
+  gather_facts: false
+  become: yes
+
+  tasks:
+    - name: Instalar paquetes del sistema
+      apt:
+        name: "{{ system_packages }}"
+        update_cache: yes
+
+    - name: Crear el directorio con el usuario root (sudo) para las claves .ssh
+      file:
+        path: /root/.ssh
+        state: directory
+
+    - name: Copiar la clave privada en el servidor en la carpeta /root/.ssh
+      copy:
+        src: /home/carlos/.ssh/id_rsa
+        dest: /root/.ssh
+        mode: '0600'
+
+    - name: Crear el directorio del proyecto
+      file:
+        path: /ansible/shield
+        state: directory
+    
+- import_playbook: deploy.yml

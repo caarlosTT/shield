@@ -1,0 +1,51 @@
+---
+- hosts: servers
+  vars_files:
+    - vars.yml
+  gather_facts: false
+  become: yes
+
+  tasks:
+    - name: Hacer un git clone del repositorio # git clone https://github.com/caarlosTT/shield.git
+      git:
+        repo: https://github.com/caarlosTT/shield.git
+        dest: /ansible/shield
+        accept_hostkey: yes
+
+    - name: Instalar las librerias de requirements.txt
+      pip:
+        requirements: /ansible/shield/requirements.txt
+
+    - name: Asegura que el fichero manage.py tiene permisos de ejecución
+      file:
+        path: /ansible/shield/manage.py
+        mode:'0777'
+
+
+    - name: Ejecutar las migraciones
+      django manage:
+        command: migrate
+        project_path: 
+
+    - name: Cargar los datos iniciales
+      django manage:
+        command: loaddata
+        project_path: /ansible/shield/metahumans/fixtures/initial_data.json
+
+    - name: Copiar el fichero de configuración de gunicorn-supervisor en la carpeta supervisor
+      template:
+        src: files/gunicorn.j2
+        dest: /etc/supervisor/conf.d/gunicorn.conf
+
+    - name: Comprueba que el servicio existe en supervisor
+      supervisorctl:
+      name: shield
+      state: present 
+
+  handlers:
+  
+  - name: Reinicia gunicorn
+      supervisorctl:
+      name: shield
+      state: restarted 
+

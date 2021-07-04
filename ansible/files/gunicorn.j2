@@ -1,0 +1,7 @@
+[program:shield]
+
+directory=ansible/django_polls
+command=/usr/bin/gunicorn3 django_polls.wsgi:application --workers 3
+autostart=true
+autorestart=true
+redirect_stderr=true
